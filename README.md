@@ -70,3 +70,23 @@ if err != nil {
 }
 
 ```
+
+#### TAG `mapper`
+The tag `mapper` allow you mapping fields with diferents names.
+
+***Example**
+Mapping field Sources from Source to Targes from Target 
+
+```go
+type Source struct {
+		Name    string
+		List    []string
+		Sources []Source
+	}
+
+	type Target struct {
+		Name    string
+		List    []string
+		Targets []Target `mapper:"Sources"`
+	}
+```
