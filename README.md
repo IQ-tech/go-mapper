@@ -12,7 +12,7 @@ This interface contains one method only:
 
 ```go
 // From creates map from source
-type ErrorWrapper interface {
+type Mapper interface {
     From(src interface{}) Result
 }
 ```
@@ -22,7 +22,7 @@ This interface contains two methods only:
 
 ```go
 // From creates map from source
-type ErrorWrapper interface {
+type Result interface {
     Merge(src interface{}) Result
     To(tgr interface{}) error
 }
