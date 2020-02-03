@@ -2,7 +2,7 @@
 
 This package holds helpers for better parses among structs.
 
-#### `New() string`
+#### `New() Mapper`
 This method reutrns a new instance of Mapper.
 
 ## Mapper types
