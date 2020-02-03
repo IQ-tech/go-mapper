@@ -53,7 +53,7 @@ result := result.Merge(entity)
 This method receive a pointer as parameter and returns error.
 ```go
 // mapping to some target
-err := result.To(target)
+err := result.To(&target)
 if err != nil {
     fmt.Println(err)
 }
@@ -64,7 +64,7 @@ if err != nil {
 
 **Example**
 ```go
-err := mapper.From(source).To(target)
+err := mapper.From(source).To(&target)
 if err != nil {
     fmt.Println(err)
 }
