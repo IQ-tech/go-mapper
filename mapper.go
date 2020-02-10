@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"fmt"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -45,7 +46,11 @@ func (m *mapper) From(src interface{}) Result {
 	// Create Map
 	source := reflect.ValueOf(src)
 
-	if source.Kind() == reflect.Slice {
+	if source.Kind() == reflect.Map {
+
+		retVal.fieldMap = m.buildMapFromMap("", src)
+
+	} else if source.Kind() == reflect.Slice {
 
 		retVal.fieldMap = m.buildMapFromSlice("", src)
 
@@ -71,7 +76,12 @@ func (r result) To(trg interface{}) (err error) {
 		return errors.NewApplicationError("Error mapper: must receive a pointer, but received " + target.Kind().String())
 	}
 
-	if target.Elem().Kind() == reflect.Slice {
+	if target.Elem().Kind() == reflect.Map {
+		err = r.setMap("", target.Elem())
+		if err != nil {
+			return errors.Wrap(err)
+		}
+	} else if target.Elem().Kind() == reflect.Slice {
 		err = r.setSlice("", target.Elem())
 		if err != nil {
 			return errors.Wrap(err)
@@ -86,6 +96,64 @@ func (r result) To(trg interface{}) (err error) {
 		if err != nil {
 			return errors.Wrap(err)
 		}
+	}
+
+	return nil
+}
+
+func (r result) setMap(rootFieldName string, target reflect.Value) (err error) {
+
+	src, ok := r.fieldMap[rootFieldName]
+	if !ok {
+		return errors.NewApplicationError("Error mapper: Field is not found")
+	}
+
+	source := reflect.ValueOf(src)
+
+	target.Set(reflect.MakeMapWithSize(target.Type(), 0))
+
+	iter := source.MapRange()
+
+	for iter.Next() {
+
+		elementType := reflect.TypeOf(target.Interface()).Elem()
+
+		if elementType.Kind() == reflect.Struct && elementType.String() != timeType {
+
+			targetItem := reflect.New(elementType)
+			fieldName := rootFieldName
+
+			if fieldName == "" {
+				fieldName = fmt.Sprintf("[%v]", iter.Key())
+			} else {
+				fieldName = fmt.Sprintf("%s.[%v]", fieldName, iter.Key())
+			}
+
+			err = r.setStruct(fieldName, targetItem)
+			if err != nil {
+				return errors.Wrap(err)
+			}
+
+			key := reflect.ValueOf(iter.Key().Interface())
+			target.SetMapIndex(key, targetItem.Elem())
+
+		} else {
+
+			key := reflect.ValueOf(iter.Key().Interface())
+			rv := reflect.ValueOf(iter.Value().Interface()).Interface()
+			item, ok := rv.(reflect.Value)
+			if !ok {
+				return errors.NewApplicationError("Error mapper: Value from map is not an instance of reflect.Value")
+			}
+
+			value, ok := item.Interface().(reflect.Value)
+			if !ok {
+				return errors.NewApplicationError("Error mapper: Value from map is not an instance of reflect.Value")
+			}
+
+			target.SetMapIndex(key, value)
+		}
+
 	}
 
 	return nil
@@ -177,7 +245,14 @@ func (r result) setStruct(rootFieldName string, trg reflect.Value) (err error) {
 			tagValue = fieldMetada.Name
 		}
 
-		if fieldType == reflect.Slice {
+		if fieldType == reflect.Map {
+
+			err = r.setMap(tagValue, field)
+			if err != nil {
+				return errors.Wrap(err)
+			}
+
+		} else if fieldType == reflect.Slice {
 
 			err = r.setSlice(tagValue, field)
 			if err != nil {
@@ -235,6 +310,50 @@ func (r result) setField(fieldName string, field reflect.Value) error {
 	}
 
 	return nil
+}
+
+func (m *mapper) buildMapFromMap(rootFieldName string, src interface{}) (mapField map[string]interface{}) {
+
+	source := reflect.ValueOf(src)
+
+	mapField = make(map[string]interface{})
+	srcMap := make(map[interface{}]interface{})
+
+	iter := source.MapRange()
+
+	for iter.Next() {
+
+		fieldName := rootFieldName
+
+		if fieldName == "" {
+			fieldName = fmt.Sprintf("[%v]", iter.Key())
+		} else {
+			fieldName = fmt.Sprintf("%s.[%v]", fieldName, iter.Key())
+		}
+
+		if iter.Value().Kind() == reflect.Struct && iter.Value().Type().String() != timeType {
+
+			mapItem := m.buildMapFromStruct(fieldName, iter.Value().Interface())
+			for k, v := range mapItem {
+				mapField[k] = v
+			}
+
+			mapField[fieldName] = mapItem
+			key := iter.Key().Interface()
+			srcMap[key] = mapItem
+
+		} else {
+
+			itemMap := reflect.ValueOf(iter.Value())
+			mapField[fieldName] = itemMap
+			key := iter.Key().Interface()
+			srcMap[key] = itemMap
+		}
+	}
+
+	mapField[rootFieldName] = srcMap
+
+	return mapField
 }
 
 func (m *mapper) buildMapFromSlice(rootFieldName string, src interface{}) (mapField map[string]interface{}) {
@@ -295,7 +414,15 @@ func (m *mapper) buildMapFromStruct(rootFieldName string, item interface{}) (map
 			fieldName = fieldName + "." + fieldMetada.Name
 		}
 
-		if field.Kind() == reflect.Slice {
+		if field.Kind() == reflect.Map {
+
+			mapItem := m.buildMapFromMap(fieldName, field.Interface())
+
+			for k, v := range mapItem {
+				mapField[k] = v
+			}
+
+		} else if field.Kind() == reflect.Slice {
 
 			mapItem := m.buildMapFromSlice(fieldName, field.Interface())
 

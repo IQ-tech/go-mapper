@@ -49,6 +49,13 @@ func TestFromTo(t *testing.T) {
 		ModelLevel1 ModelLevel1
 	}
 
+	type MapModel struct {
+		Name      string
+		MapInt    map[int]int
+		MapString map[string]string
+		Map       map[string]ModelLevel1
+	}
+
 	type ViewLevel1 struct {
 		NameLevel2 string `mapper:"ModelLevel2.Name"`
 		NameLevel1 string `mapper:"Name"`
@@ -61,6 +68,13 @@ func TestFromTo(t *testing.T) {
 	type View struct {
 		Name string     `mapper:"Name"`
 		Sub  ViewLevel1 `mapper:"ModelLevel1"`
+	}
+
+	type MapView struct {
+		Name      string
+		MapInt    map[int]int
+		MapString map[string]string
+		Map       map[string]ViewLevel1
 	}
 
 	type ViewSliceField struct {
@@ -83,6 +97,48 @@ func TestFromTo(t *testing.T) {
 		args args
 	}{
 		// TESTS
+		{
+			name: "Mapping a map source",
+			args: args{
+				e: MapModel{
+					Name: "teste",
+					MapInt: map[int]int{
+						1: 2,
+						2: 3,
+					},
+					MapString: map[string]string{
+						"key-string":   "value-string",
+						"key-string-2": "value-string-2",
+					},
+					Map: map[string]ModelLevel1{
+						"model-1": ModelLevel1{
+							Name: "name level 1",
+							ModelLevel2: ModelLevel2{
+								Name: "name level 2",
+							},
+						},
+					},
+				},
+				v: &MapView{},
+				expected: &MapView{
+					Name: "teste",
+					MapInt: map[int]int{
+						1: 2,
+						2: 3,
+					},
+					MapString: map[string]string{
+						"key-string":   "value-string",
+						"key-string-2": "value-string-2",
+					},
+					Map: map[string]ViewLevel1{
+						"model-1": ViewLevel1{
+							NameLevel1: "name level 1",
+							NameLevel2: "name level 2",
+						},
+					},
+				},
+			},
+		},
 		{
 			name: "Mapping source to target",
 			args: args{
