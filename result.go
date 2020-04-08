@@ -114,7 +114,7 @@ func (r result) setSlice(rootFieldName string, target reflect.Value) (err error)
 
 	src, ok := r.fieldMap[rootFieldName]
 	if !ok {
-		return errors.NewApplicationError("Error mapper: Field is not found")
+		return nil
 	}
 
 	source := reflect.ValueOf(src)
