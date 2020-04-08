@@ -233,7 +233,7 @@ func (r result) setField(fieldName string, field reflect.Value) error {
 
 	item, ok := r.fieldMap[fieldName]
 	if !ok {
-		return errors.NewApplicationError("Error mapper: Field is not found")
+		return nil
 	}
 
 	value, ok := item.(reflect.Value)
