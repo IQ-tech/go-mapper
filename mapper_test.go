@@ -106,6 +106,15 @@ func TestFromTo(t *testing.T) {
 		TaggedMapInt map[int]int `mapper:"MapInt"`
 	}
 
+	type TaggedViewLevel2 struct {
+		TaggedName string `mapper:"Name"`
+	}
+
+	type TaggedViewLevel1 struct {
+		TaggedLevel2 TaggedViewLevel2 `mapper:"ModelLevel2"`
+		TaggedName   string           `mapper:"Name"`
+	}
+
 	tests := []struct {
 		name string
 		args args
@@ -355,6 +364,24 @@ func TestFromTo(t *testing.T) {
 					MapInt: map[int]int{
 						1: 2,
 						2: 3,
+					},
+				},
+			},
+		},
+		{
+			name: "Mapping a nested view with tags",
+			args: args{
+				e: TaggedViewLevel1{
+					TaggedName: "teste_lvl_1",
+					TaggedLevel2: TaggedViewLevel2{
+						TaggedName: "teste_lvl_2",
+					},
+				},
+				v: &ModelLevel1{},
+				expected: &ModelLevel1{
+					Name: "teste_lvl_1",
+					ModelLevel2: ModelLevel2{
+						Name: "teste_lvl_2",
 					},
 				},
 			},
