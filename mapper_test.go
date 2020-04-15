@@ -87,9 +87,32 @@ func TestFromTo(t *testing.T) {
 		Name string `mapper:"Name"`
 	}
 
+	type ViewDifferentFieldName struct {
+		DifferentName string `mapper:"Name"`
+	}
+
 	type FlatView struct {
 		Name    string `mapper:"Name"`
 		SubName string `mapper:"ModelLevel1.Name"`
+	}
+
+	type SimpleMapModel struct {
+		Name   string
+		MapInt map[int]int
+	}
+
+	type SimpleTaggedMapView struct {
+		TaggedName   string      `mapper:"Name"`
+		TaggedMapInt map[int]int `mapper:"MapInt"`
+	}
+
+	type TaggedViewLevel2 struct {
+		TaggedName string `mapper:"Name"`
+	}
+
+	type TaggedViewLevel1 struct {
+		TaggedLevel2 TaggedViewLevel2 `mapper:"ModelLevel2"`
+		TaggedName   string           `mapper:"Name"`
 	}
 
 	tests := []struct {
@@ -298,6 +321,68 @@ func TestFromTo(t *testing.T) {
 				v: &SimpleView{},
 				expected: &SimpleView{
 					Name: "teste",
+				},
+			},
+		},
+		{
+			name: "From struct has tag",
+			args: args{
+				e: ViewDifferentFieldName{
+					DifferentName: "teste",
+				},
+				v: &Model{},
+				expected: &Model{
+					Name: "teste",
+				},
+			},
+		},
+		{
+			name: "Mapping slices with tags on from",
+			args: args{
+				e: []ViewDifferentFieldName{
+					{DifferentName: "teste"},
+				},
+				v: &[]Model{},
+				expected: &[]Model{
+					{Name: "teste"},
+				},
+			},
+		},
+		{
+			name: "Mapping a map source with tags",
+			args: args{
+				e: SimpleTaggedMapView{
+					TaggedName: "teste",
+					TaggedMapInt: map[int]int{
+						1: 2,
+						2: 3,
+					},
+				},
+				v: &SimpleMapModel{},
+				expected: &SimpleMapModel{
+					Name: "teste",
+					MapInt: map[int]int{
+						1: 2,
+						2: 3,
+					},
+				},
+			},
+		},
+		{
+			name: "Mapping a nested view with tags",
+			args: args{
+				e: TaggedViewLevel1{
+					TaggedName: "teste_lvl_1",
+					TaggedLevel2: TaggedViewLevel2{
+						TaggedName: "teste_lvl_2",
+					},
+				},
+				v: &ModelLevel1{},
+				expected: &ModelLevel1{
+					Name: "teste_lvl_1",
+					ModelLevel2: ModelLevel2{
+						Name: "teste_lvl_2",
+					},
 				},
 			},
 		},
