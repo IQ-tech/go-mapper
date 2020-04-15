@@ -96,6 +96,16 @@ func TestFromTo(t *testing.T) {
 		SubName string `mapper:"ModelLevel1.Name"`
 	}
 
+	type SimpleMapModel struct {
+		Name   string
+		MapInt map[int]int
+	}
+
+	type SimpleTaggedMapView struct {
+		TaggedName   string      `mapper:"Name"`
+		TaggedMapInt map[int]int `mapper:"MapInt"`
+	}
+
 	tests := []struct {
 		name string
 		args args
@@ -314,6 +324,38 @@ func TestFromTo(t *testing.T) {
 				v: &Model{},
 				expected: &Model{
 					Name: "teste",
+				},
+			},
+		},
+		{
+			name: "Mapping slices with tags on from",
+			args: args{
+				e: []ViewDifferentFieldName{
+					{DifferentName: "teste"},
+				},
+				v: &[]Model{},
+				expected: &[]Model{
+					{Name: "teste"},
+				},
+			},
+		},
+		{
+			name: "Mapping a map source with tags",
+			args: args{
+				e: SimpleTaggedMapView{
+					TaggedName: "teste",
+					TaggedMapInt: map[int]int{
+						1: 2,
+						2: 3,
+					},
+				},
+				v: &SimpleMapModel{},
+				expected: &SimpleMapModel{
+					Name: "teste",
+					MapInt: map[int]int{
+						1: 2,
+						2: 3,
+					},
 				},
 			},
 		},
