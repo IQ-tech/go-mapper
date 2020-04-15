@@ -87,6 +87,10 @@ func TestFromTo(t *testing.T) {
 		Name string `mapper:"Name"`
 	}
 
+	type ViewDifferentFieldName struct {
+		DifferentName string `mapper:"Name"`
+	}
+
 	type FlatView struct {
 		Name    string `mapper:"Name"`
 		SubName string `mapper:"ModelLevel1.Name"`
@@ -297,6 +301,18 @@ func TestFromTo(t *testing.T) {
 				},
 				v: &SimpleView{},
 				expected: &SimpleView{
+					Name: "teste",
+				},
+			},
+		},
+		{
+			name: "From struct has tag",
+			args: args{
+				e: ViewDifferentFieldName{
+					DifferentName: "teste",
+				},
+				v: &Model{},
+				expected: &Model{
 					Name: "teste",
 				},
 			},

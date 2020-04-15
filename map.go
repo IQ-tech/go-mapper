@@ -126,17 +126,23 @@ func (m *mapper) buildMapFromStruct(rootFieldName string, item interface{}) (map
 
 		fieldMetada := itemStruct.Type().Field(i)
 
-		fieldName := rootFieldName
+		tagValue, foundTag := fieldMetada.Tag.Lookup(MapperTag)
 
-		if fieldName == "" {
-			fieldName = fieldMetada.Name
-		} else {
-			fieldName = fieldName + "." + fieldMetada.Name
+		if tagValue == "-" && foundTag {
+			continue
+		}
+
+		if rootFieldName != "" && foundTag {
+			tagValue = rootFieldName + "." + tagValue
+		} else if rootFieldName != "" && !foundTag {
+			tagValue = rootFieldName + "." + fieldMetada.Name
+		} else if rootFieldName == "" && !foundTag {
+			tagValue = fieldMetada.Name
 		}
 
 		if field.Kind() == reflect.Map {
 
-			mapItem := m.buildMapFromMap(fieldName, field.Interface())
+			mapItem := m.buildMapFromMap(tagValue, field.Interface())
 
 			for k, v := range mapItem {
 				mapField[k] = v
@@ -144,7 +150,7 @@ func (m *mapper) buildMapFromStruct(rootFieldName string, item interface{}) (map
 
 		} else if field.Kind() == reflect.Slice {
 
-			mapItem := m.buildMapFromSlice(fieldName, field.Interface())
+			mapItem := m.buildMapFromSlice(tagValue, field.Interface())
 
 			for k, v := range mapItem {
 				mapField[k] = v
@@ -152,14 +158,14 @@ func (m *mapper) buildMapFromStruct(rootFieldName string, item interface{}) (map
 
 		} else if field.Kind() == reflect.Struct && field.Type().String() != timeType {
 
-			mapStruct := m.buildMapFromStruct(fieldName, field.Interface())
+			mapStruct := m.buildMapFromStruct(tagValue, field.Interface())
 
 			for k, v := range mapStruct {
 				mapField[k] = v
 			}
 
 		} else {
-			mapField[fieldName] = field
+			mapField[tagValue] = field
 		}
 	}
 

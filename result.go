@@ -178,14 +178,14 @@ func (r result) setStruct(rootFieldName string, trg reflect.Value) (err error) {
 		field := target.Field(i)
 		fieldType := field.Kind()
 
+		if tagValue == "-" && foundTag {
+			continue
+		}
+
 		if rootFieldName != "" && foundTag {
 			tagValue = rootFieldName + "." + tagValue
 		} else if rootFieldName != "" {
 			tagValue = rootFieldName + "." + fieldMetada.Name
-		}
-
-		if tagValue == "-" && foundTag {
-			continue
 		}
 
 		if tagValue == "" && foundTag {
