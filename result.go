@@ -42,6 +42,11 @@ func (r result) To(trg interface{}) (err error) {
 		if err != nil {
 			return errors.Wrap(err)
 		}
+	} else if target.Elem().Kind() == reflect.Interface {
+		err = r.setStruct("", reflect.ValueOf(target.Elem().Interface()))
+		if err != nil {
+			return errors.Wrap(err)
+		}
 	} else {
 		err = r.setField("", target)
 		if err != nil {
