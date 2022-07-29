@@ -17,12 +17,15 @@ func (m *mapper) From(src interface{}) Result {
 	// Create Map
 	source := reflect.ValueOf(src)
 
-	if source.Kind() == reflect.Map {
+	if source.Kind() == reflect.Ptr {
+		src = source.Elem().Interface()
+		source = reflect.ValueOf(source.Elem().Interface())
+	}
 
+	if source.Kind() == reflect.Map {
 		retVal.fieldMap = m.buildMapFromMap("", src)
 
 	} else if source.Kind() == reflect.Slice {
-
 		retVal.fieldMap = m.buildMapFromSlice("", src)
 
 	} else {
@@ -33,12 +36,9 @@ func (m *mapper) From(src interface{}) Result {
 }
 
 func (m *mapper) buildMapFromMap(rootFieldName string, src interface{}) (mapField map[string]interface{}) {
-
 	source := reflect.ValueOf(src)
-
 	mapField = make(map[string]interface{})
 	srcMap := make(map[interface{}]interface{})
-
 	iter := source.MapRange()
 
 	for iter.Next() {
@@ -77,15 +77,12 @@ func (m *mapper) buildMapFromMap(rootFieldName string, src interface{}) (mapFiel
 }
 
 func (m *mapper) buildMapFromSlice(rootFieldName string, src interface{}) (mapField map[string]interface{}) {
-
 	source := reflect.ValueOf(src)
 	mapField = make(map[string]interface{})
 	list := []interface{}{}
 
 	for i := 0; i < source.Len(); i++ {
-
 		sourceItem := source.Index(i)
-
 		fieldName := rootFieldName
 
 		if fieldName == "" {
@@ -95,7 +92,6 @@ func (m *mapper) buildMapFromSlice(rootFieldName string, src interface{}) (mapFi
 		}
 
 		if sourceItem.Kind() == reflect.Struct && sourceItem.Type().String() != timeType {
-
 			mapItem := m.buildMapFromStruct(fieldName, sourceItem.Interface())
 			for k, v := range mapItem {
 				mapField[k] = v
@@ -104,6 +100,7 @@ func (m *mapper) buildMapFromSlice(rootFieldName string, src interface{}) (mapFi
 			list = append(list, mapItem)
 
 		} else {
+
 			itemSlice := reflect.ValueOf(sourceItem)
 			mapField[fieldName] = itemSlice
 			list = append(list, itemSlice)
@@ -116,7 +113,6 @@ func (m *mapper) buildMapFromSlice(rootFieldName string, src interface{}) (mapFi
 }
 
 func (m *mapper) buildMapFromStruct(rootFieldName string, item interface{}) (mapField map[string]interface{}) {
-
 	itemStruct := reflect.ValueOf(item)
 	mapField = make(map[string]interface{})
 
@@ -141,7 +137,6 @@ func (m *mapper) buildMapFromStruct(rootFieldName string, item interface{}) (map
 		}
 
 		if field.Kind() == reflect.Map {
-
 			mapItem := m.buildMapFromMap(tagValue, field.Interface())
 
 			for k, v := range mapItem {
@@ -149,7 +144,6 @@ func (m *mapper) buildMapFromStruct(rootFieldName string, item interface{}) (map
 			}
 
 		} else if field.Kind() == reflect.Slice {
-
 			mapItem := m.buildMapFromSlice(tagValue, field.Interface())
 
 			for k, v := range mapItem {
@@ -157,7 +151,6 @@ func (m *mapper) buildMapFromStruct(rootFieldName string, item interface{}) (map
 			}
 
 		} else if field.Kind() == reflect.Struct && field.Type().String() != timeType {
-
 			mapStruct := m.buildMapFromStruct(tagValue, field.Interface())
 
 			for k, v := range mapStruct {
