@@ -28,6 +28,9 @@ func (m *mapper) From(src interface{}) Result {
 	} else if source.Kind() == reflect.Slice {
 		retVal.fieldMap = m.buildMapFromSlice("", src)
 
+	} else if source.Kind() == reflect.Interface {
+		retVal = m.From(source.Interface()).(result)
+
 	} else {
 		retVal.fieldMap = m.buildMapFromStruct("", src)
 	}
